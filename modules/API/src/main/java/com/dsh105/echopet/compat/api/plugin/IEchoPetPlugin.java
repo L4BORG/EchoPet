@@ -24,6 +24,7 @@ import com.dsh105.echopet.compat.api.plugin.hook.IWorldGuardProvider;
 import com.dsh105.echopet.compat.api.registration.PetRegistry;
 import com.dsh105.echopet.compat.api.util.ISpawnUtil;
 import com.jolbox.bonecp.BoneCP;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.Plugin;
 
 public interface IEchoPetPlugin extends Plugin {
@@ -42,7 +43,7 @@ public interface IEchoPetPlugin extends Plugin {
 
     public ISqlPetManager getSqlPetManager();
 
-    public BoneCP getDbPool();
+    public HikariDataSource getDbPool();
 
     public IVanishProvider getVanishProvider();
 

@@ -19,7 +19,7 @@ package com.dsh105.echopet.compat.api.entity;
 
 public enum HorseArmour {
 
-    NONE(Integer.MIN_VALUE),
+    NONE(0),
     IRON(1),
     GOLD(2),
     DIAMOND(3);

@@ -31,18 +31,18 @@
 
     <modules>
         <module>modules/API</module>
-        <module>modules/v1_6_R3</module>
-        <module>modules/v1_7_R1</module>
-        <module>modules/v1_7_R2</module>
-        <module>modules/v1_7_R3</module>
-        <module>modules/v1_7_R4</module>
-        <module>modules/v1_8_R1</module>
-        <module>modules/v1_8_R2</module>
         <module>modules/v1_8_R3</module>
         <module>modules/EchoPet</module>
     </modules>
 
     <dependencies>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>LATEST</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.dsh105</groupId>
             <artifactId>Commodus</artifactId>
-            <version>1.0.3-SNAPSHOT</version>
+            <version>1.0.5</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.captainbern</groupId>
@@ -80,11 +80,18 @@
             <artifactId>VanishNoPacket</artifactId>
             <version>3.18.7</version>
             <scope>provided</scope>
+            <optional>true</optional>
+            <exclusions>
+            <exclusion>
+                <groupId>net.milkbowl.vault</groupId>
+                <artifactId>Vault</artifactId>
+            </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>net.milkbowl.vault</groupId>
-            <artifactId>Vault</artifactId>
-            <version>1.2.32</version>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -92,6 +99,7 @@
             <artifactId>worldedit</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <scope>provided</scope>
+            <optional>true</optional>
             <exclusions>
                 <exclusion>
                     <groupId>org.bukkit</groupId>
@@ -104,6 +112,7 @@
             <artifactId>worldguard</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <scope>provided</scope>
+            <optional>true</optional>
             <exclusions>
                 <exclusion>
                     <groupId>org.bukkit</groupId>
@@ -124,7 +133,7 @@
         <dependency>
             <groupId>com.comphenix.protocol</groupId>
             <artifactId>ProtocolLib-v1_7_R4</artifactId>
-            <version>3.6.4-SNAPSHOT</version>
+            <version>3.6.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.comphenix.packetwrapper</groupId>
@@ -135,20 +144,12 @@
 
     <repositories>
         <repository>
-            <id>spigot-hub</id>
-            <url>http://hub.spigotmc.org/nexus/content/groups/public/</url>
+            <id>techcable-repo</id>
+            <url>https://repo.techcable.net/content/groups/public/</url>
         </repository>
         <repository>
-            <id>bukkit-repo</id>
-            <url>http://repo.bukkit.org/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>spigot-repo</id>
+            <id>md_5-repo</id>
             <url>http://repo.md-5.net/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>dsh-repo</id>
-            <url>http://repo.dsh105.com/</url>
         </repository>
         <repository>
             <id>hawk-repo</id>
@@ -170,13 +171,10 @@
             <id>elmakers-repo</id>
             <url>http://maven.elmakers.com/repository/</url>
         </repository>
+        <!-- Old ProtocolLib Repo -->
         <repository>
-            <id>dmulloy2-repo</id>
-            <url>http://repo.dmulloy2.net/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>yawkat-repo</id>
-            <url>http://mvn.yawk.at/</url>
+            <id>comphenix-repo</id>
+            <url>http://repo.comphenix.com/content/groups/public/</url>
         </repository>
     </repositories>
 
@@ -223,10 +221,4 @@
         </extensions>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>dsh105-ftp</id>
-            <url>ftp://repo.dsh105.com/</url>
-        </repository>
-    </distributionManagement>
 </project>

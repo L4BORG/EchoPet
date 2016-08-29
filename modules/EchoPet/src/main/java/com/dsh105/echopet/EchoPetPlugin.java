@@ -19,7 +19,6 @@ package com.dsh105.echopet;
 
 import com.dsh105.commodus.config.YAMLConfig;
 import com.dsh105.commodus.config.YAMLConfigManager;
-import com.dsh105.commodus.data.Metrics;
 import com.dsh105.echopet.api.PetManager;
 import com.dsh105.echopet.api.SqlPetManager;
 import com.dsh105.echopet.commands.CommandComplete;
@@ -29,7 +28,6 @@ import com.dsh105.echopet.commands.util.CommandManager;
 import com.dsh105.echopet.commands.util.DynamicPluginCommand;
 import com.dsh105.echopet.compat.api.config.ConfigOptions;
 import com.dsh105.echopet.compat.api.plugin.*;
-import com.dsh105.echopet.compat.api.plugin.data.Updater;
 import com.dsh105.echopet.compat.api.plugin.uuid.UUIDMigration;
 import com.dsh105.echopet.compat.api.reflection.SafeConstructor;
 import com.dsh105.echopet.compat.api.reflection.utility.CommonReflection;
@@ -41,8 +39,8 @@ import com.dsh105.echopet.hook.WorldGuardProvider;
 import com.dsh105.echopet.listeners.MenuListener;
 import com.dsh105.echopet.listeners.PetEntityListener;
 import com.dsh105.echopet.listeners.PetOwnerListener;
-import com.jolbox.bonecp.BoneCP;
-import com.jolbox.bonecp.BoneCPConfig;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -51,8 +49,6 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -76,7 +72,7 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
     private YAMLConfig petConfig;
     private YAMLConfig mainConfig;
     private YAMLConfig langConfig;
-    private BoneCP dbPool;
+    private HikariDataSource dbPool;
 
     private VanishProvider vanishProvider;
     private WorldGuardProvider worldGuardProvider;
@@ -157,14 +153,9 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
 
         this.setupSpigotProtocolHackCompatibilityIfNeeded();
 
-        try {
-            Metrics metrics = new Metrics(this);
-            metrics.start();
-        } catch (IOException e) {
-            // Failed to submit the stats :(
-        }
 
-        this.checkUpdates();
+
+
     }
 
     @Override
@@ -173,7 +164,7 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
             MANAGER.removeAllPets();
         }
         if (dbPool != null) {
-            dbPool.shutdown();
+            dbPool.close();
         }
         if (this.spigotProtocolHackPacketListener != null) {
             this.spigotProtocolHackPacketListener.shutdown();
@@ -237,62 +228,52 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
         this.prefix = Lang.PREFIX.toString();
     }
 
-    private void prepareSqlDatabase() {
-        String host = mainConfig.getString("sql.host", "localhost");
-        int port = mainConfig.getInt("sql.port", 3306);
-        String db = mainConfig.getString("sql.database", "EchoPet");
-        String user = mainConfig.getString("sql.username", "none");
-        String pass = mainConfig.getString("sql.password", "none");
-        BoneCPConfig bcc = new BoneCPConfig();
-        bcc.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + db);
-        bcc.setUsername(user);
-        bcc.setPassword(pass);
-        bcc.setPartitionCount(2);
-        bcc.setMinConnectionsPerPartition(3);
-        bcc.setMaxConnectionsPerPartition(7);
-        bcc.setConnectionTestStatement("SELECT 1");
-        try {
-            dbPool = new BoneCP(bcc);
-        } catch (SQLException e) {
-            Logger.log(Logger.LogLevel.SEVERE, "Failed to connect to MySQL! [MySQL DataBase: " + db + "].", e, true);
-        }
-        if (dbPool != null) {
-            Connection connection = null;
-            Statement statement = null;
-            try {
-                connection = dbPool.getConnection();
-                statement = connection.createStatement();
-                statement.executeUpdate("CREATE TABLE IF NOT EXISTS EchoPet_version3 (" +
-                        "OwnerName varchar(36)," +
-                        "PetType varchar(255)," +
-                        "PetName varchar(255)," +
-                        "PetData BIGINT," +
-                        "RiderPetType varchar(255)," +
-                        "RiderPetName varchar(255), " +
-                        "RiderPetData BIGINT," +
-                        "PRIMARY KEY (OwnerName)" +
-                        ");");
+	private void prepareSqlDatabase() {
+		String host = mainConfig.getString("sql.host", "localhost");
+		int port = mainConfig.getInt("sql.port", 3306);
+		String db = mainConfig.getString("sql.database", "EchoPet");
+		String user = mainConfig.getString("sql.username", "none");
+		String pass = mainConfig.getString("sql.password", "none");
+		HikariConfig config = new HikariConfig();
+		config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + db);
+		config.setUsername(user);
+		config.setPassword(pass);
+		dbPool = new HikariDataSource(config);
+		Connection connection = null;
+		Statement statement = null;
+		try {
+			connection = dbPool.getConnection();
+			statement = connection.createStatement();
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS EchoPet_version3 (" +
+									"OwnerName varchar(36)," +
+									"PetType varchar(255)," +
+									"PetName varchar(255)," +
+									"PetData BIGINT," +
+									"RiderPetType varchar(255)," +
+									"RiderPetName varchar(255), " +
+									"RiderPetData BIGINT," +
+									"PRIMARY KEY (OwnerName)" +
+									");");
 
-                // Convert previous database versions
-                TableMigrationUtil.migrateTables();
-            } catch (SQLException e) {
-                Logger.log(Logger.LogLevel.SEVERE, "Table generation failed [MySQL DataBase: " + db + "].", e, true);
-            } finally {
-                try {
-                    if (statement != null) {
-                        statement.close();
-                    }
-                    if (connection != null) {
-                        connection.close();
-                    }
-                } catch (SQLException ignored) {
-                }
-            }
-        }
+			// Convert previous database versions
+			TableMigrationUtil.migrateTables();
+		} catch (SQLException e) {
+			Logger.log(Logger.LogLevel.SEVERE, "Table generation failed [MySQL DataBase: " + db + "].", e, true);
+		} finally {
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+				if (connection != null) {
+					connection.close();
+				}
+			} catch (SQLException ignored) {
+			}
+		}
 
-        // Make sure to convert those UUIDs!
+		// Make sure to convert those UUIDs!
 
-    }
+	}
 
     private void setupSpigotProtocolHackCompatibilityIfNeeded() {
         if (ReflectionUtil.MC_VERSION_NUMERIC != 174) {
@@ -311,40 +292,14 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
         this.spigotProtocolHackPacketListener = new SpigotProtocolHackPacketListener(this);
     }
 
-    protected void checkUpdates() {
-        if (this.getMainConfig().getBoolean("checkForUpdates", true)) {
-            final File file = this.getFile();
-            final Updater.UpdateType updateType = this.getMainConfig().getBoolean("autoUpdate", false) ? Updater.UpdateType.DEFAULT : Updater.UpdateType.NO_DOWNLOAD;
-            getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
-                @Override
-                public void run() {
-                    Updater updater = new Updater(EchoPet.getPlugin(), 53655, file, updateType, false);
-                    update = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE;
-                    if (update) {
-                        name = updater.getLatestName();
-                        EchoPet.LOG.log(ChatColor.GOLD + "An update is available: " + name);
-                        EchoPet.LOG.log(ChatColor.GOLD + "Type /ecupdate to update.");
-                        if (!updateChecked) {
-                            updateChecked = true;
-                        }
-                    }
-                }
-            });
-        }
-    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (commandLabel.equalsIgnoreCase("ecupdate")) {
-            if (sender.hasPermission("echopet.update")) {
-                if (updateChecked) {
-                    @SuppressWarnings("unused")
-                    Updater updater = new Updater(this, 53655, this.getFile(), Updater.UpdateType.NO_VERSION_CHECK, true);
-                    return true;
-                } else {
-                    sender.sendMessage(this.prefix + ChatColor.GOLD + " An update is not available.");
-                    return true;
-                }
+            if (sender.hasPermission("echopet.update"))
+            {
+				sender.sendMessage(this.prefix + ChatColor.GOLD + " Auto update is not available in this version.");
+				return true;
             } else {
                 Lang.sendTo(sender, Lang.NO_PERMISSION.toString().replace("%perm%", "echopet.update"));
                 return true;
@@ -428,7 +383,7 @@ public class EchoPetPlugin extends JavaPlugin implements IEchoPetPlugin {
     }
 
     @Override
-    public BoneCP getDbPool() {
+    public HikariDataSource getDbPool() {
         return dbPool;
     }
 

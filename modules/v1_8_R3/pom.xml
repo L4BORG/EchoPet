@@ -39,14 +39,16 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.8.4-R0.1-SNAPSHOT</version>
-            <type>jar</type>
+            <version>1.8-R0.1-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${user.home}/Minecraft/spigot-1.8.7.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>craftbukkit</artifactId>
-            <version>1.8.4-R0.1-SNAPSHOT</version>
-            <type>jar</type>
+            <version>1.8-R0.1-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${user.home}/Minecraft/spigot-1.8.7.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.dsh105</groupId>
@@ -59,6 +61,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
     </dependencies>
 
     <build>

@@ -169,8 +169,8 @@ public class NMSEntityUtil {
                 throw new RuntimeException("Failed to initialize the GoalSelector field for the entities");
             }
 
-        } catch (Exception ಠ_ಠ) {
-            throw new RuntimeException("Failed to initialize the goal-related fields!", ಠ_ಠ);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize the goal-related fields!", e);
         }
     }
 }
